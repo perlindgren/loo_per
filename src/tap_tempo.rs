@@ -2,18 +2,10 @@
 
 use egui::{Key, Sense, Ui};
 
-#[derive(Default, Copy, Clone, Debug)]
-pub enum Mode {
-    #[default]
-    Waiting,
-    Learning,
-}
-
 pub struct Tempo {
     last_tap: f64,
     last_beat: f64,
     bpm: f64,
-    mode: Mode,
 }
 
 impl Default for Tempo {
@@ -22,15 +14,14 @@ impl Default for Tempo {
             last_tap: Default::default(),
             last_beat: Default::default(),
             bpm: 100.0,
-            mode: Default::default(),
         }
     }
 }
 
 impl Tempo {
     fn update_on_tap(&mut self, curr_time: f64, diff: f64) {
-        println!("pressed {} {:?}", curr_time, self.mode);
-        self.mode = Mode::Learning;
+        println!("Tap {}", curr_time,);
+
         self.bpm = (60.0 / diff).clamp(40.0, 240.0);
 
         self.last_tap = curr_time;
@@ -40,13 +31,10 @@ impl Tempo {
     pub fn tap_tempo(&mut self, ui: &mut Ui) {
         let curr_time = ui.input(|input| input.time);
         let diff = curr_time - self.last_tap;
-        if diff > 4.0 {
-            self.mode = Mode::Waiting;
-        }
 
         ui.label(format!("Now :{:.2}", curr_time));
         ui.label(format!("Last tap :{:.2}", self.last_tap));
-        ui.label(format!("Bpm :{:06.2}, Mode {:?}", self.bpm, self.mode));
+        ui.label(format!("Bpm :{:06.2}", self.bpm));
 
         // BPM Slider
         ui.add(
@@ -90,11 +78,6 @@ impl Tempo {
         let next_beat = self.last_beat + 60.0 / self.bpm;
         let to_next_beat = next_beat - curr_time;
         let rel_to_next_beat = to_next_beat / (60.0 / self.bpm);
-
-        // println!(
-        //     "next beat at {:06.2} to next {:06.2}",
-        //     next_beat, rel_to_next_beat
-        // );
 
         let progress = (rel_to_next_beat).clamp(0.0, 1.0);
         if to_next_beat <= 0.0 {
