@@ -24,16 +24,13 @@ fn main() -> eframe::Result {
 
 struct MyApp {
     tempo: Tempo,
-
-    bpm: f64,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for MyApp {
     fn default() -> Self {
         Self {
             tempo: Tempo::default(),
-
-            bpm: 100.0,
         }
     }
 }
@@ -44,8 +41,6 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("LooPer with Tap Tempo");
             self.tempo.tap_tempo(ui);
-
-            ui.add(egui::Slider::new(&mut self.bpm, 40.0..=240.0).text("bpm"));
         });
     }
 }

@@ -1,8 +1,6 @@
 // Tap tempo Widget
 
-use eframe::egui_glow::painter;
 use egui::{Key, Sense, Ui};
-use std::time::{Duration, SystemTime};
 
 #[derive(Default, Copy, Clone, Debug)]
 pub enum Mode {
@@ -16,7 +14,6 @@ pub struct Tempo {
     last_beat: f64,
     bpm: f64,
     mode: Mode,
-    bpm_input_text: String,
 }
 
 impl Default for Tempo {
@@ -26,21 +23,15 @@ impl Default for Tempo {
             last_beat: Default::default(),
             bpm: 100.0,
             mode: Default::default(),
-            bpm_input_text: format!("{:06.2}", 100.0),
         }
     }
 }
 
 impl Tempo {
-    fn update_bpm_text(&mut self) {
-        self.bpm_input_text = format!("{:06.2}", self.bpm);
-    }
-
     fn update_on_tap(&mut self, curr_time: f64, diff: f64) {
         println!("pressed {} {:?}", curr_time, self.mode);
         self.mode = Mode::Learning;
-        self.bpm = 60.0 / diff;
-        self.update_bpm_text();
+        self.bpm = (60.0 / diff).clamp(40.0, 240.0);
 
         self.last_tap = curr_time;
         self.last_beat = curr_time;
@@ -57,20 +48,12 @@ impl Tempo {
         ui.label(format!("Last tap :{:.2}", self.last_tap));
         ui.label(format!("Bpm :{:06.2}, Mode {:?}", self.bpm, self.mode));
 
-        let bpm_re =
-            ui.add(egui::TextEdit::singleline(&mut self.bpm_input_text).desired_width(40.0));
-
-        if bpm_re.changed() {
-            println!("changed to {}", self.bpm_input_text);
-        }
-
-        if bpm_re.lost_focus()
-            && ui.input(|i| i.key_pressed(Key::Enter))
-            && let Ok(new_bpm) = self.bpm_input_text.trim().parse::<f64>()
-        {
-            self.bpm = new_bpm;
-            self.update_bpm_text();
-        }
+        // BPM Slider
+        ui.add(
+            egui::Slider::new(&mut self.bpm, 40.0..=240.0)
+                .text("bpm")
+                .update_while_editing(false),
+        );
 
         // Tap button
         let desired_size = egui::vec2(60.0, 60.0); // diameter
@@ -87,12 +70,10 @@ impl Tempo {
             {
                 // BPM +/-
                 if input.key_pressed(Key::ArrowUp) {
-                    self.bpm += 1.0;
-                    self.update_bpm_text();
+                    self.bpm = (self.bpm + 1.0).min(240.0);
                 }
                 if input.key_pressed(Key::ArrowDown) {
-                    self.bpm -= 1.0;
-                    self.update_bpm_text();
+                    self.bpm = (self.bpm - 1.0).max(40.0);
                 }
 
                 // Space/Enter or Mouse tap
