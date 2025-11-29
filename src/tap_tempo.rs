@@ -1,7 +1,7 @@
 // Tap tempo Widget
 
 use eframe::egui_glow::painter;
-use egui::{Sense, Ui};
+use egui::{Key, Sense, Ui};
 use std::time::{Duration, SystemTime};
 
 #[derive(Default, Copy, Clone, Debug)]
@@ -65,50 +65,43 @@ impl Tempo {
         }
 
         if bpm_re.lost_focus()
-            && ui.input(|i| i.key_pressed(egui::Key::Enter))
+            && ui.input(|i| i.key_pressed(Key::Enter))
             && let Ok(new_bpm) = self.bpm_input_text.trim().parse::<f64>()
         {
             self.bpm = new_bpm;
             self.update_bpm_text();
-        } else {
-            // Handle tap on enter/space only when bmp input is not focused
-            if !bpm_re.has_focus() {
-                ui.input(|input| {
-                    // Space/Enter to tap
-                    if (input.key_pressed(egui::Key::Enter) || input.key_pressed(egui::Key::Space))
-                    {
-                        self.update_on_tap(curr_time, diff);
-                    }
-                    // BPM +/-
-                    if input.key_pressed(egui::Key::ArrowUp) {
-                        self.bpm += 1.0;
-                        self.update_bpm_text();
-                    }
-                    if input.key_pressed(egui::Key::ArrowDown) {
-                        self.bpm -= 1.0;
-                        self.update_bpm_text();
-                    }
-                });
-            }
         }
 
         // Tap button
-        let desired_size = egui::vec2(40.0, 40.0); // diameter
+        let desired_size = egui::vec2(60.0, 60.0); // diameter
         let (rect, _response) = ui.allocate_exact_size(desired_size, Sense::click());
-
-        // println!("bpm_re has focus: {}", bpm_re.has_focus());
 
         // Mouse click tap
         ui.input(|input| {
+            // Hovering the tap button
             if input
                 .pointer
-                .press_origin()
-                .map(|p| {
-                    rect.contains(p) && input.pointer.button_pressed(egui::PointerButton::Primary)
-                })
+                .hover_pos()
+                .map(|p| rect.contains(p))
                 .unwrap_or(false)
             {
-                self.update_on_tap(curr_time, diff);
+                // BPM +/-
+                if input.key_pressed(Key::ArrowUp) {
+                    self.bpm += 1.0;
+                    self.update_bpm_text();
+                }
+                if input.key_pressed(Key::ArrowDown) {
+                    self.bpm -= 1.0;
+                    self.update_bpm_text();
+                }
+
+                // Space/Enter or Mouse tap
+                if input.pointer.button_pressed(egui::PointerButton::Primary)
+                    || input.key_pressed(Key::Enter)
+                    || input.key_pressed(Key::Space)
+                {
+                    self.update_on_tap(curr_time, diff);
+                }
             }
         });
 
