@@ -4,8 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
 eframe = "0.33.2"
 egui = "0.33.2"
 egui_extras = "0.33.2"
 env_logger = "0.11.8"
 epaint = "0.33.2"
+midir = { version = "0.10.3", features = ["jack"] }
+serde = "1.0.228"
+toml = "0.9.8"
